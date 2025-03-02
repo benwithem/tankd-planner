@@ -5,10 +5,7 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare({
-    mode: 'directory',
-    functionPerRoute: false // Use a single entry point
-  }),
+  adapter: cloudflare(),
   integrations: [
     tailwind(),
     react()
