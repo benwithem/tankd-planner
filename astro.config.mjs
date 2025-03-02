@@ -5,7 +5,7 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare(),
+  adapter: cloudflare({ streaming: false }),
   integrations: [
     tailwind(),
     react()
