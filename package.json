@@ -1,7 +1,11 @@
 {
   "name": "tankd-planner",
-  "type": "module",
+  "description": "A project to plan and deploy tankd applications using Astro, Cloudflare, Tailwind, and React. Also includes an archive utility for AI pair programming.",
   "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "archive": "./archive.js"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -20,5 +24,18 @@
   },
   "devDependencies": {
     "wrangler": "^3.111.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/tankd-planner.git"
+  },
+  "keywords": [
+    "astro",
+    "cloudflare",
+    "tailwind",
+    "react",
+    "tankd-planner"
+  ],
+  "author": "Ben Withem benwithem@gmail.com",
+  "license": "MIT"
 }

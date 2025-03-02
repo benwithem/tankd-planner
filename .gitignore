@@ -20,3 +20,7 @@ pnpm-debug.log*
 
 # Astro
 .astro/
+
+# LLM Helpers
+.archive-session.json
+archive.txt
