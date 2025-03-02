@@ -9,5 +9,15 @@ export default defineConfig({
   integrations: [
     tailwind(),
     react()
-  ]
+  ],
+  vite: {
+    plugins: [
+      {
+        name: 'inject-messagechannel-polyfill',
+        renderChunk(code) {
+          return 'if (typeof MessageChannel === "undefined") { globalThis.MessageChannel = class { constructor() { this.port1 = { postMessage() {}, onmessage: null, close() {} }; this.port2 = { postMessage() {}, onmessage: null, close() {} }; } } }\n' + code;
+        }
+      }
+    ]
+  }
 });
