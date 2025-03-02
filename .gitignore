@@ -1,11 +1,9 @@
-# build output
-dist/
-
-# generated types
-.astro/
-
 # dependencies
 node_modules/
+
+# build output
+dist/
+.output/
 
 # logs
 npm-debug.log*
@@ -20,5 +18,5 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
-# jetbrains setting folder
-.idea/
+# Astro
+.astro/

@@ -6,15 +6,11 @@ import react from '@astrojs/react';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({
-    mode: 'directory'
+    mode: 'directory',
+    functionPerRoute: false // Use a single entry point
   }),
   integrations: [
     tailwind(),
     react()
-  ],
-  image: {
-    service: {
-      entrypoint: 'astro/assets/services/sharp'
-    }
-  }
+  ]
 });
