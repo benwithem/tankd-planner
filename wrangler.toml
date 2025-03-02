@@ -1,0 +1,8 @@
+name = "tankd-planner"
+type = "javascript"
+
+# Optionally include your account details if deploying to production
+# account_id = "your_account_id_here"
+# workers_dev = true
+# route = ""
+# zone_id = ""

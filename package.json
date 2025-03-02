@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "wrangler pages deploy dist"
+    "deploy": "wrangler pages deploy --project-name tankd-planner dist"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.2.3",
