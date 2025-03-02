@@ -1,0 +1,42 @@
+---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Aquarium Planner - Design Your Perfect Tank">
+  <section class="py-12 text-center">
+    <h1 class="text-4xl font-bold mb-4">Design Your Perfect Aquarium</h1>
+    <p class="text-xl text-gray-600 mb-8">
+      Plan your tank, select compatible fish, and create a thriving aquatic environment.
+    </p>
+    <a 
+      href="/planner" 
+      class="inline-block bg-aqua-blue hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+    >
+      Start Planning
+    </a>
+  </section>
+  
+  <section class="py-8 grid md:grid-cols-3 gap-8">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-3">Tank Builder</h2>
+      <p class="text-gray-600">
+        Select your tank size and parameters to get started on your aquarium design.
+      </p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-3">Stock Your Tank</h2>
+      <p class="text-gray-600">
+        Choose from a wide variety of fish, plants, and invertebrates for your aquarium.
+      </p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-3">Compatibility Checker</h2>
+      <p class="text-gray-600">
+        Ensure all your aquatic inhabitants will thrive together in harmony.
+      </p>
+    </div>
+  </section>
+</Layout>

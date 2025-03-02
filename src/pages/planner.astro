@@ -1,0 +1,153 @@
+---
+// src/pages/planner.astro
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// Get fish data
+const allFish = await getCollection('fish');
+---
+
+<Layout title="Aquarium Planner - Design Your Tank">
+  <h1 class="text-3xl font-bold mb-6">Design Your Aquarium</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Tank Configuration -->
+    <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Tank Setup</h2>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Tank Size</label>
+        <select id="tank-size" class="w-full p-2 border rounded">
+          <option value="19">5 Gallon (19L)</option>
+          <option value="38" selected>10 Gallon (38L)</option>
+          <option value="76">20 Gallon (76L)</option>
+          <option value="110">29 Gallon (110L)</option>
+        </select>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Temperature: <span id="temp-value">25</span>°C</label>
+        <input 
+          type="range" 
+          id="temperature" 
+          min="20" 
+          max="30" 
+          step="0.5"
+          value="25"
+          class="w-full"
+        />
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">pH: <span id="ph-value">7.0</span></label>
+        <input 
+          type="range" 
+          id="ph" 
+          min="6.0" 
+          max="8.0" 
+          step="0.1"
+          value="7.0"
+          class="w-full"
+        />
+      </div>
+    </div>
+    
+    <!-- Fish Selection -->
+    <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Add Fish</h2>
+      
+      <div class="mb-4">
+        <input 
+          type="text" 
+          id="fish-search"
+          placeholder="Search fish..." 
+          class="w-full p-2 border rounded"
+        />
+      </div>
+      
+      <div class="max-h-64 overflow-y-auto">
+        <ul class="divide-y">
+          {allFish.map(fish => (
+            <li class="py-2 flex justify-between items-center">
+              <div>
+                <span class="font-medium">{fish.data.commonName}</span>
+                <div class="text-xs text-gray-500 italic">{fish.data.scientificName}</div>
+              </div>
+              <button 
+                class="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                data-fish-id={fish.slug}
+              >
+                Add
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    
+    <!-- Compatibility Results -->
+    <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold mb-4">Your Tank</h2>
+      
+      <div id="selected-fish-container" class="mb-4">
+        <p class="text-gray-500 italic">No fish selected yet.</p>
+      </div>
+      
+      <div class="mb-4">
+        <h3 class="font-medium mb-2">Stocking Level</h3>
+        <div class="w-full bg-gray-200 rounded-full h-2.5">
+          <div 
+            id="stocking-meter"
+            class="bg-green-500 h-2.5 rounded-full" 
+            style="width: 0%;"
+          ></div>
+        </div>
+      </div>
+      
+      <div id="compatibility-issues" class="mt-4">
+        <!-- Compatibility warnings will be displayed here -->
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Simple client-side interactivity
+  document.addEventListener('DOMContentLoaded', () => {
+    const tempSlider = document.getElementById('temperature');
+    const tempValue = document.getElementById('temp-value');
+    const phSlider = document.getElementById('ph');
+    const phValue = document.getElementById('ph-value');
+    
+    tempSlider.addEventListener('input', (e) => {
+      tempValue.textContent = e.target.value;
+    });
+    
+    phSlider.addEventListener('input', (e) => {
+      phValue.textContent = e.target.value;
+    });
+    
+    // This is just a placeholder for now - will be replaced with React components
+    const addButtons = document.querySelectorAll('[data-fish-id]');
+    const selectedFishContainer = document.getElementById('selected-fish-container');
+    
+    addButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const fishName = button.previousElementSibling.querySelector('.font-medium').textContent;
+        
+        if (selectedFishContainer.querySelector('.text-gray-500')) {
+          selectedFishContainer.innerHTML = '';
+        }
+        
+        const fishElement = document.createElement('div');
+        fishElement.className = 'py-2 border-b flex justify-between items-center';
+        fishElement.innerHTML = `
+          <span>${fishName}</span>
+          <button class="text-red-500 text-sm">Remove</button>
+        `;
+        
+        selectedFishContainer.appendChild(fishElement);
+      });
+    });
+  });
+</script>
