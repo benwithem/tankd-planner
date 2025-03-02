@@ -24,3 +24,4 @@ pnpm-debug.log*
 # LLM Helpers
 .archive-session.json
 archive.txt
+unarchive.txt

@@ -5,7 +5,7 @@ import path from 'path';
 import crypto from 'crypto';
 
 // Default ignore directories and files (including package-lock.json)
-const DEFAULT_IGNORES = ['node_modules', '.git', 'dist', 'build', 'package-lock.json', 'archive.js','archive.txt'];
+const DEFAULT_IGNORES = ['node_modules', '.git', 'dist', 'build', 'package-lock.json', 'archive.js','archive.txt','unarchive.txt'];
 const SESSION_FILE = '.archive-session.json';
 
 /**
