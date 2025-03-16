@@ -25,3 +25,5 @@ pnpm-debug.log*
 .archive-session.json
 archive.txt
 unarchive.txt
+archive_in.txt
+archive_out.txt

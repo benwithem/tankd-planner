@@ -1,6 +1,7 @@
 name = "tankd-planner"
 type = "javascript"
 pages_build_output_dir = "dist"
+compatibility_date = "2025-01-01"
 
 # Optionally include your account details if deploying to production
 # account_id = "your_account_id_here"

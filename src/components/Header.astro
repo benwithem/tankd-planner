@@ -1,0 +1,116 @@
+---
+// src/components/Header.astro
+import MobileMenu from "@/components/MobileMenu";
+
+// Get the current path to highlight the active link
+const currentPath = Astro.url.pathname;
+const isActive = (path: string) => {
+  if (path === '/' && currentPath === '/') return true;
+  if (path !== '/' && currentPath.startsWith(path)) return true;
+  return false;
+};
+---
+
+<header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-800">
+  <div class="container flex h-16 items-center justify-between">
+    <div class="flex items-center">
+      <a href="/" class="flex items-center gap-2">
+        <div class="bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-400 dark:to-cyan-500 text-white font-bold py-2 px-4 rounded-md text-xl">
+          <span class="inline-block font-mono">Tankd</span>
+        </div>
+      </a>
+    </div>
+    
+    <!-- Desktop navigation -->
+    <nav class="mx-6 hidden items-center space-x-6 md:flex">
+      <a 
+        href="/" 
+        class={`text-sm font-medium transition-colors ${isActive('/') 
+          ? 'text-primary' 
+          : 'hover:text-primary dark:text-gray-200 dark:hover:text-primary'}`}
+      >
+        Home
+      </a>
+      <a 
+        href="/planner" 
+        class={`text-sm font-medium transition-colors ${isActive('/planner') 
+          ? 'text-primary' 
+          : 'hover:text-primary dark:text-gray-200 dark:hover:text-primary'}`}
+      >
+        Tank Planner
+      </a>
+      <a 
+        href="/fish-guide" 
+        class={`text-sm font-medium transition-colors ${isActive('/fish-guide') 
+          ? 'text-primary' 
+          : 'hover:text-primary dark:text-gray-200 dark:hover:text-primary'}`}
+      >
+        Fish Guide
+      </a>
+      <a 
+        href="/plants" 
+        class={`text-sm font-medium transition-colors ${isActive('/plants') 
+          ? 'text-primary' 
+          : 'hover:text-primary dark:text-gray-200 dark:hover:text-primary'}`}
+      >
+        Plants
+      </a>
+      <a 
+        href="/about" 
+        class={`text-sm font-medium transition-colors ${isActive('/about') 
+          ? 'text-primary' 
+          : 'hover:text-primary dark:text-gray-200 dark:hover:text-primary'}`}
+      >
+        About
+      </a>
+    </nav>
+    
+    <div class="flex items-center justify-end space-x-4">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9 dark:border-gray-700">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun hidden h-4 w-4"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon h-4 w-4"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+      </button>
+      
+      <!-- Mobile menu using our React component -->
+      <MobileMenu client:load />
+    </div>
+  </div>
+</header>
+
+<script define:vars={{ currentPath }}>
+  // Theme toggling functionality
+  const themeToggle = document.getElementById('theme-toggle');
+  const sunIcon = document.querySelector('.sun');
+  const moonIcon = document.querySelector('.moon');
+  
+  // Check for saved theme preference or use the system preference
+  if (localStorage.getItem('theme') === 'dark' || 
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    sunIcon?.classList.remove('hidden');
+    moonIcon?.classList.add('hidden');
+  } else {
+    document.documentElement.classList.remove('dark');
+    sunIcon?.classList.add('hidden');
+    moonIcon?.classList.remove('hidden');
+  }
+  
+  // Toggle theme
+  themeToggle?.addEventListener('click', () => {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      sunIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('hidden');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      sunIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('hidden');
+    }
+  });
+
+  // Set current path for mobile menu
+  window.currentPath = currentPath;
+</script>

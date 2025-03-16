@@ -1,14 +1,35 @@
 /// <reference types="astro/client" />
 
-// Declare the astro:content module
-declare module 'astro:content' {
-    interface DefineCollection {
-      schema?: any;
-    }
+interface ImportMetaEnv {
+  readonly PUBLIC_SUPABASE_URL: string;
+  readonly PUBLIC_SUPABASE_ANON_KEY: string;
+  readonly PUBLIC_API_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+declare module '@radix-ui/react-hover-card' {
+  import type { ReactNode, ElementType } from 'react';
   
-    export function defineCollection(config: DefineCollection): any;
-    export function getCollection(collection: string, filter?: (entry: any) => boolean): Promise<any[]>;
-    export function getEntry(collection: string, slug: string): Promise<any>;
-    
-    export const z: any;
+  interface HoverCardProps {
+    children: ReactNode;
   }
+  
+  interface HoverCardTriggerProps {
+    asChild?: boolean;
+    children: ReactNode;
+  }
+  
+  interface HoverCardContentProps {
+    side?: 'top' | 'right' | 'bottom' | 'left';
+    align?: 'start' | 'center' | 'end';
+    className?: string;
+    children: ReactNode;
+  }
+  
+  export const Root: ElementType<HoverCardProps>;
+  export const Trigger: ElementType<HoverCardTriggerProps>;
+  export const Content: ElementType<HoverCardContentProps>;
+}
