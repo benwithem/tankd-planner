@@ -9,10 +9,26 @@ import { cn } from '@/lib/utils';
 
 interface WaterParametersProps {
   parameters: TankParameters;
-  onParameterChange: (key: keyof TankParameters, value: number) => void;
+  onParameterChange: (key: keyof TankParameters, value: any) => void;
 }
 
 export function WaterParameters({ parameters, onParameterChange }: WaterParametersProps) {
+  const handleTemperatureChange = (value: number) => {
+    onParameterChange('temperature', {
+      ...parameters.temperature,
+      min: value,
+      max: value + 4
+    });
+  };
+
+  const handlePHChange = (value: number) => {
+    onParameterChange('pH', {
+      ...parameters.pH,
+      min: value,
+      max: value + 0.5
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -26,16 +42,16 @@ export function WaterParameters({ parameters, onParameterChange }: WaterParamete
               Water Temperature
             </Label>
             <span className="text-sm text-muted-foreground">
-              {parameters.temperature}°C / {(parameters.temperature * 9/5 + 32).toFixed(0)}°F
+              {parameters.temperature.min.toFixed(1)}°C - {parameters.temperature.max.toFixed(1)}°C / {(parameters.temperature.min * 9/5 + 32).toFixed(0)}°F - {(parameters.temperature.max * 9/5 + 32).toFixed(0)}°F
             </span>
           </div>
           <div className="relative">
             <Slider
-              value={[parameters.temperature]}
+              value={[parameters.temperature.min]}
               min={18}
               max={32}
               step={0.5}
-              onValueChange={([value]) => onParameterChange('temperature', value)}
+              onValueChange={([value]) => handleTemperatureChange(value)}
               className={cn(
                 "w-full",
                 "before:absolute before:inset-0 before:h-2 before:rounded-full",
@@ -55,15 +71,17 @@ export function WaterParameters({ parameters, onParameterChange }: WaterParamete
               <Droplet className="h-4 w-4 text-blue-500" />
               pH Level
             </Label>
-            <span className="text-sm text-muted-foreground">{parameters.ph.toFixed(1)}</span>
+            <span className="text-sm text-muted-foreground">
+              {parameters.pH.min.toFixed(1)} - {parameters.pH.max.toFixed(1)}
+            </span>
           </div>
           <div className="relative">
             <Slider
-              value={[parameters.ph]}
+              value={[parameters.pH.min]}
               min={5.5}
               max={8.5}
               step={0.1}
-              onValueChange={([value]) => onParameterChange('ph', value)}
+              onValueChange={([value]) => handlePHChange(value)}
               className={cn(
                 "w-full",
                 "before:absolute before:inset-0 before:h-2 before:rounded-full",

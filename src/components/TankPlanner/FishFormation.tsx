@@ -1,6 +1,6 @@
 import React from 'react';
 import { Fish } from 'lucide-react';
-import type { TankItem } from './types';
+import type { FishData } from './types';
 
 // Define fish position type for type safety
 export interface FishPosition {
@@ -12,7 +12,7 @@ export interface FishPosition {
 }
 
 interface FishFormationProps {
-  group: TankItem & { quantity: number; isAggressive: boolean };
+  group: FishData & { quantity: number; isAggressive: boolean };
   position: { x: number; y: number; radius: number };
   fishSize: number;
   getFishColor: (temperament: string | undefined) => string;
@@ -20,7 +20,7 @@ interface FishFormationProps {
 
 // Move the createFishFormation function above the FishFormation component
 function createFishFormation(
-  group: TankItem & { quantity: number; isAggressive: boolean }, 
+  group: FishData & { quantity: number; isAggressive: boolean }, 
   position: {x: number, y: number, radius: number},
   fishSize: number
 ): FishPosition[] {
@@ -111,17 +111,13 @@ function createFishFormation(
 
 export function FishFormation({ group, position, fishSize, getFishColor }: FishFormationProps) {
   // Get temperament for coloring
-  const temperament = group.data && typeof group.data === 'object' && 
-    'temperament' in group.data ? group.data.temperament as string : undefined;
+  const temperament = group.temperament;
   
   // Use the formation generator
   const fishPositions = createFishFormation(group, position, fishSize);
   
   // Get fish name
-  const fishName = group.data && typeof group.data === 'object' && 
-    'commonName' in group.data 
-      ? group.data.commonName as string
-      : 'Unknown';
+  const fishName = group.name;
   
   // Calculate label offset based on group size
   const labelYOffset = group.quantity > 15 

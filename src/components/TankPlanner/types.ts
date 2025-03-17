@@ -1,8 +1,13 @@
-// Base interfaces
+// Common types
 export interface WaterParameters {
-  temperature: [number, number];
-  pH: [number, number];
-  hardness: [number, number];
+  temperature: {
+    min: number;
+    max: number;
+  };
+  pH: {
+    min: number;
+    max: number;
+  };
 }
 
 export interface TankDimensions {
@@ -11,111 +16,136 @@ export interface TankDimensions {
   heightCm: number;
 }
 
-export interface TankParameters {
-  temperature: number;
-  ph: number;
-  size: number;
+export interface TankSize {
+  minimum: number;
+  recommended: number;
 }
 
-export type CompatibilityLevel = 
-  | 'highly-compatible'  // Fish work great together
-  | 'compatible'         // Fish work well with minor considerations 
-  | 'caution'            // Fish can work together with careful monitoring
-  | 'incompatible'       // Fish should not be kept together
-  | 'unknown';           // Not enough information
-
-export type FishCategory = 
-  | 'freshwater' 
-  | 'saltwater' 
-  | 'community' 
-  | 'predator' 
-  | 'cichlid' 
-  | 'tropical' 
-  | 'coldwater' 
-  | 'bottom-dweller'
-  | 'schooling'
-  | 'centerpiece';
-
+export type CareLevel = 'easy' | 'medium' | 'hard';
+export type FishSize = 'small' | 'medium' | 'large';
+export type FishTemperament = 'peaceful' | 'semi-aggressive' | 'aggressive';
+export type FishLocation = 'top' | 'middle' | 'bottom';
+export type GrowthRate = 'slow' | 'medium' | 'fast';
 export type LightingLevel = 'low' | 'medium' | 'high';
-export type CO2Requirement = 'none' | 'optional' | 'required';
-export type SubstrateType = 'sand' | 'gravel' | 'aqua soil' | 'clay' | 'bare bottom' | 'none';
+export type SubstrateType = 'sand' | 'gravel' | 'soil' | 'aqua soil' | 'none';
+export type CO2Requirement = 'none' | 'recommended' | 'required';
+export type CompatibilityLevel = 'compatible' | 'caution' | 'incompatible';
 
+// Base interface for tank items
 export interface BaseTankItemData {
   slug: string;
   name: string;
+  scientificName: string;
   description: string;
+  careLevel: CareLevel;
+  quantity?: number;
+  waterParameters: WaterParameters;
   image?: string;
   thumbnail?: string;
-  waterParameters: WaterParameters;
-  tankSize: {
-    minimum: number;
-    recommended: number;
-  };
-  quantity?: number;
+  tankSize: TankSize;
+  categories: string[];
 }
 
+// Fish-specific interface
 export interface FishData extends BaseTankItemData {
-  behavior: string[];
-  size?: number;
-  bioload: number;
-  compatibility: {
+  temperament: FishTemperament;
+  location: FishLocation;
+  size: FishSize;
+  isPlantSafe: boolean;
+  schooling: boolean;
+  minSchoolSize?: number;
+  compatibility?: {
     otherFish?: Record<string, CompatibilityLevel>;
-    plants: boolean;
+    plants?: boolean;
   };
-  temperament?: 'peaceful' | 'semi-aggressive' | 'aggressive';
-  careLevel?: 'easy' | 'moderate' | 'difficult';
-  dimensions?: {
-    length: number;
-    height: number;
-  };
-  color?: string;
   incompatibleWith?: string[];
-  swimSpeed?: 'slow' | 'medium' | 'fast';
-  swimLevel?: 'top' | 'middle' | 'bottom';
-  maxSize?: number;
-  categories: FishCategory[];
+  diet?: string;
+  behavior?: string;
+  breeding?: string;
 }
 
-export type TankItem = FishData;
-
+// Plant-specific interface
 export interface PlantData extends BaseTankItemData {
-  scientificName: string;
-  commonName: string;
+  height: number;
+  width: number;
+  growthRate: GrowthRate;
   lighting: LightingLevel;
   co2: CO2Requirement;
-  growth: 'slow' | 'medium' | 'fast';
   substrate: SubstrateType[];
-  careLevel: 'beginner' | 'intermediate' | 'advanced';
+  compatibility?: {
+    otherPlants?: Record<string, CompatibilityLevel>;
+    fish?: boolean;
+  };
+  propagation?: string;
+  placement?: string;
 }
 
-export type PlantItem = PlantData;
+// Tank interfaces
+export interface TankParameters {
+  temperature: {
+    min: number;
+    max: number;
+  };
+  pH: {
+    min: number;
+    max: number;
+  };
+  size: number;
+  co2: CO2Requirement;
+}
 
 export interface Tank {
   name: string;
+  size: number;
   dimensions: TankDimensions;
-  volumeLiters: number;
+  defaultParameters: TankParameters;
+  profile?: string;
+  description?: string;
+  volumeGallons?: number;
+  volumeLiters?: number;
 }
 
-export interface TankData {
-  name: string;
-  dimensions: TankDimensions;
-  parameters: TankParameters;
+export interface TankData extends Tank {
   profile: string;
+  description: string;
   volumeGallons: number;
   volumeLiters: number;
 }
 
-// Popular fish combinations
-export interface FishCombination {
-  id: string;
-  name: string;
-  description: string;
-  fishSlugs: string[];
+// Compatibility interfaces
+export interface CompatibilityAnalysisProps {
+  parameters: TankParameters;
+  selectedFish: FishData[];
+  selectedPlants: PlantData[];
+  onViewDetails: (item: FishData | PlantData) => void;
 }
 
-// User preferences
-export interface UserPreferences {
-  favoriteFish: string[]; // Array of fish slugs
-  recentSelections: string[]; // Array of recently selected fish slugs
-  customCombinations: FishCombination[];
+export interface CompatibilityCardProps {
+  item: FishData | PlantData;
+  parameters: TankParameters;
+  onUpdateQuantity: (quantity: number) => void;
+  onRemove: () => void;
+  onViewDetails: () => void;
 }
+
+export interface CompatibilityModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  item: FishData | PlantData;
+  parameters: TankParameters;
+  selectedFish: FishData[];
+  selectedPlants: PlantData[];
+}
+
+// Type guards
+export const isFishData = (item: BaseTankItemData): item is FishData => {
+  return 'temperament' in item && 'location' in item;
+};
+
+export const isPlantData = (item: BaseTankItemData): item is PlantData => {
+  return 'growthRate' in item && 'lighting' in item;
+};
+
+// Alias types for backward compatibility
+export type TankItem = FishData;
+export type PlantItem = PlantData;

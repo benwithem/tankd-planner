@@ -1,38 +1,32 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import { TankPlannerPage } from '@/components/TankPlanner/TankPlannerPage';
-import type { TankItem, PlantItem } from '@/components/TankPlanner/types';
-import { getAllFish, getAllTanks, getAllPlants, convertTanksForPlannerPage } from '@/services/collections';
+import { getCollection } from 'astro:content';
+import { transformFishEntry, transformPlantEntry, transformTankEntry, getStandardTanks } from '@/services/collections';
 
-// Fetch data using our centralized collections service
-const [allFish, allTanks] = await Promise.all([
-  getAllFish(),
-  getAllTanks()
+// Fetch data from collections
+const [fishEntries, plantEntries, tankEntries] = await Promise.all([
+  getCollection('fish'),
+  getCollection('plants'),
+  getCollection('tanks')
 ]);
 
-// Fetch plants separately to help with debugging
-console.log('Fetching plants...');
-const allPlants = await getAllPlants();
-console.log('Fetched plants:', allPlants);
+// Transform the data
+const fish = fishEntries.map(entry => transformFishEntry(entry));
+const plants = plantEntries.map(entry => transformPlantEntry(entry));
+const customTanks = tankEntries.map(entry => transformTankEntry(entry));
 
-// Convert tanks to the format expected by TankPlannerPage
-const formattedTanks = convertTanksForPlannerPage(allTanks);
-
-// Log all data being passed to TankPlannerPage
-console.log('Data being passed to TankPlannerPage:', {
-  fishCount: allFish.length,
-  plantsCount: allPlants.length,
-  tanksCount: formattedTanks.length
-});
+// Use custom tanks if available, otherwise use standard tanks
+const tanks = customTanks.length > 0 ? customTanks : getStandardTanks();
 ---
 
 <Layout title="Tank Planner">
-  <div class="min-h-screen bg-blue-50 dark:bg-gray-900">
+  <main class="container mx-auto py-8 px-4">
     <TankPlannerPage 
-      client:only="react" 
-      allFish={allFish} 
-      allPlants={allPlants} 
-      allTanks={formattedTanks} 
+      client:load
+      fish={fish}
+      plants={plants}
+      tanks={tanks}
     />
-  </div>
+  </main>
 </Layout>

@@ -9,7 +9,7 @@ import type { Tank, TankDimensions, TankParameters } from './types';
 interface TankSetupProps {
   dimensions: TankDimensions;
   onDimensionsChange: (dimensions: TankDimensions) => void;
-  onParameterChange: (key: keyof TankParameters, value: number) => void;
+  onParameterChange: (key: keyof TankParameters, value: any) => void;
   tanks: Tank[];
 }
 
@@ -32,8 +32,13 @@ export function TankSetup({
       const selectedTank = tanks.find(tank => tank.name === selectedTankId);
       if (selectedTank) {
         onDimensionsChange(selectedTank.dimensions);
-        // Update tank size parameter
-        onParameterChange('size', selectedTank.volumeLiters);
+        // Update all tank parameters
+        onParameterChange('size', selectedTank.size);
+        if (selectedTank.defaultParameters) {
+          onParameterChange('temperature', selectedTank.defaultParameters.temperature);
+          onParameterChange('pH', selectedTank.defaultParameters.pH);
+          onParameterChange('co2', selectedTank.defaultParameters.co2);
+        }
       }
     }
   }, [selectedTankId, tanks, onDimensionsChange, onParameterChange]);
@@ -69,7 +74,7 @@ export function TankSetup({
             <SelectContent>
               {tanks.map((tank) => (
                 <SelectItem key={tank.name} value={tank.name}>
-                  {tank.name} ({Math.floor(tank.volumeLiters)}L / {Math.floor(tank.volumeLiters * 0.264172)}gal)
+                  {tank.name} ({Math.floor(tank.size)}L / {Math.floor(tank.size * 0.264172)}gal)
                 </SelectItem>
               ))}
               <SelectItem value="custom">Custom Size</SelectItem>

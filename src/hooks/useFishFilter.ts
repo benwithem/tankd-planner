@@ -1,182 +1,126 @@
-import { useState, useMemo, useEffect } from 'react';
-import type { TankItem, FishData, FishCategory } from '@/components/TankPlanner/types';
+import { useState, useCallback } from 'react';
+import type { FishData, TankParameters, isFishData } from '@/components/TankPlanner/types';
 
-// Sorting options
-export type SortOption = 
-  | 'name' 
-  | 'size' 
-  | 'compatibility' 
-  | 'temperature'
-  | 'careLevel';
+export type SortOption = 'name' | 'size' | 'care';
 
-export function useFishFilter(allFish: TankItem[]) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [plantSafeOnly, setPlantSafeOnly] = useState(false);
-  const [sizeCompatibleOnly, setSizeCompatibleOnly] = useState(false);
-  const [tankSize, setTankSize] = useState<number | undefined>(undefined);
-  const [activeFishCategories, setActiveFishCategories] = useState<FishCategory[]>([]);
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
+interface UseFishFilterProps {
+  allFish: FishData[];
+  tankParameters?: TankParameters;
+}
+
+export const useFishFilter = ({ allFish, tankParameters }: UseFishFilterProps) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
-  // Local storage for favorites
-  const [favoriteFish, setFavoriteFish] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('favoriteFish');
-      return saved ? JSON.parse(saved) : [];
+  const [filterCareLevel, setFilterCareLevel] = useState<string[]>([]);
+  const [filterSize, setFilterSize] = useState<string[]>([]);
+  const [filterTemperament, setFilterTemperament] = useState<string[]>([]);
+  const [filterLocation, setFilterLocation] = useState<string[]>([]);
+  const [showCompatibleOnly, setShowCompatibleOnly] = useState(false);
+
+  const isCompatible = useCallback((fish: FishData): boolean => {
+    if (!tankParameters) return true;
+
+    // Check tank size compatibility
+    if (fish.tankSize.minimum > tankParameters.size) {
+      return false;
     }
-    return [];
-  });
 
-  // Save favorites to localStorage when they change
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('favoriteFish', JSON.stringify(favoriteFish));
+    // Check water parameter compatibility
+    const { temperature, pH } = tankParameters.waterParameters;
+    if (
+      temperature.min > fish.waterParameters.temperature.min ||
+      temperature.max < fish.waterParameters.temperature.max ||
+      pH.min > fish.waterParameters.pH.min ||
+      pH.max < fish.waterParameters.pH.max
+    ) {
+      return false;
     }
-  }, [favoriteFish]);
 
-  // Toggle a fish as favorite
-  const toggleFavorite = (fishSlug: string) => {
-    setFavoriteFish(prev => 
-      prev.includes(fishSlug)
-        ? prev.filter(slug => slug !== fishSlug)
-        : [...prev, fishSlug]
-    );
-  };
+    return true;
+  }, [tankParameters]);
 
-  // Check if a fish is favorite
-  const isFavorite = (fishSlug: string) => {
-    return favoriteFish.includes(fishSlug);
-  };
+  const getFilteredFish = useCallback(() => {
+    let filtered = [...allFish];
 
-  const filteredFish = useMemo(() => {
-    if (!allFish) return [];
-    
-    let result = allFish.filter(fish => {
-      if (!fish) return false;
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(fish =>
+        fish.name.toLowerCase().includes(query) ||
+        fish.scientificName.toLowerCase().includes(query) ||
+        fish.description.toLowerCase().includes(query)
+      );
+    }
 
-      // Search filter - always applied when there's a search term
-      const hasSearchMatch = searchTerm === '' || 
-        [fish.name, fish.description]
-          .filter(Boolean)
-          .some(text => text?.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      // Plant safety filter - only applied when toggle is ON
-      const hasPlantSafety = !plantSafeOnly || 
-        (fish.compatibility?.plants === true);
-        
-      // Size compatibility filter - only applied when toggle is ON
-      const hasSizeCompatibility = !sizeCompatibleOnly || 
-        !tankSize || 
-        (fish.tankSize?.minimum !== undefined && fish.tankSize.minimum <= tankSize);
-        
-      // Category filter - only applied when categories are selected
-      const matchesCategories = activeFishCategories.length === 0 ||
-        (fish.categories && 
-         fish.categories.some(category => activeFishCategories.includes(category)));
-         
-      // Favorites filter - only applied when favorites toggle is ON
-      const matchesFavorites = !favoritesOnly || isFavorite(fish.slug);
+    // Apply care level filter
+    if (filterCareLevel.length > 0) {
+      filtered = filtered.filter(fish => filterCareLevel.includes(fish.careLevel));
+    }
 
-      return hasSearchMatch && hasPlantSafety && hasSizeCompatibility && 
-             matchesCategories && matchesFavorites;
-    });
-    
+    // Apply size filter
+    if (filterSize.length > 0) {
+      filtered = filtered.filter(fish => filterSize.includes(fish.size));
+    }
+
+    // Apply temperament filter
+    if (filterTemperament.length > 0) {
+      filtered = filtered.filter(fish => filterTemperament.includes(fish.temperament));
+    }
+
+    // Apply location filter
+    if (filterLocation.length > 0) {
+      filtered = filtered.filter(fish => filterLocation.includes(fish.location));
+    }
+
+    // Apply compatibility filter
+    if (showCompatibleOnly) {
+      filtered = filtered.filter(fish => isCompatible(fish));
+    }
+
     // Apply sorting
-    result = [...result].sort((a, b) => {
-      if (!a || !b) return 0;
-      
-      let comparison = 0;
-      
+    filtered.sort((a, b) => {
       switch (sortOption) {
         case 'name':
-          comparison = (a.name || '').localeCompare(b.name || '');
-          break;
+          return a.name.localeCompare(b.name);
         case 'size':
-          comparison = (a.tankSize?.minimum || 0) - (b.tankSize?.minimum || 0);
-          break;
-        case 'compatibility':
-          // Sort by number of compatible fish
-          const aCompatibility = Object.values(a.compatibility?.otherFish || {})
-            .filter(level => level === 'compatible' || level === 'highly-compatible').length;
-          const bCompatibility = Object.values(b.compatibility?.otherFish || {})
-            .filter(level => level === 'compatible' || level === 'highly-compatible').length;
-          comparison = aCompatibility - bCompatibility;
-          break;
-        case 'temperature':
-          comparison = (a.waterParameters?.temperature[0] || 0) - (b.waterParameters?.temperature[0] || 0);
-          break;
-        case 'careLevel':
-          const careLevelRank = {
-            'easy': 1,
-            'moderate': 2,
-            'difficult': 3
-          };
-          comparison = 
-            (careLevelRank[a.careLevel || 'moderate'] || 2) - 
-            (careLevelRank[b.careLevel || 'moderate'] || 2);
-          break;
+          return (a.tankSize.minimum || 0) - (b.tankSize.minimum || 0);
+        case 'care':
+          const careLevelOrder = { beginner: 0, intermediate: 1, advanced: 2 };
+          return careLevelOrder[a.careLevel] - careLevelOrder[b.careLevel];
         default:
-          comparison = 0;
-          break;
+          return 0;
       }
-      
-      // Apply sort direction
-      return sortDirection === 'asc' ? comparison : -comparison;
     });
-    
-    return result;
+
+    return filtered;
   }, [
-    allFish, 
-    searchTerm, 
-    plantSafeOnly, 
-    sizeCompatibleOnly, 
-    tankSize, 
-    activeFishCategories, 
-    favoritesOnly, 
-    sortOption, 
-    sortDirection, 
-    favoriteFish
+    allFish,
+    searchQuery,
+    filterCareLevel,
+    filterSize,
+    filterTemperament,
+    filterLocation,
+    showCompatibleOnly,
+    sortOption,
+    isCompatible
   ]);
 
-  // Calculate total and filtered counts
-  const totalCount = allFish.length;
-  const filteredCount = filteredFish.length;
-
-  // Get all available categories from the fish data
-  const availableCategories = useMemo(() => {
-    const categories = new Set<FishCategory>();
-    allFish.forEach(fish => {
-      fish.categories?.forEach(category => {
-        categories.add(category);
-      });
-    });
-    return Array.from(categories);
-  }, [allFish]);
-
   return {
-    searchTerm,
-    setSearchTerm,
-    plantSafeOnly,
-    setPlantSafeOnly,
-    sizeCompatibleOnly,
-    setSizeCompatibleOnly,
-    tankSize,
-    setTankSize,
-    filteredFish,
-    totalCount,
-    filteredCount,
-    activeFishCategories,
-    setActiveFishCategories,
-    availableCategories,
-    favoritesOnly, 
-    setFavoritesOnly,
-    favoriteFish,
-    toggleFavorite,
-    isFavorite,
+    searchQuery,
+    setSearchQuery,
     sortOption,
     setSortOption,
-    sortDirection,
-    setSortDirection
+    filterCareLevel,
+    setFilterCareLevel,
+    filterSize,
+    setFilterSize,
+    filterTemperament,
+    setFilterTemperament,
+    filterLocation,
+    setFilterLocation,
+    showCompatibleOnly,
+    setShowCompatibleOnly,
+    getFilteredFish,
+    isCompatible
   };
-}
+};

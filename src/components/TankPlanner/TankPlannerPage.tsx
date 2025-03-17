@@ -1,83 +1,68 @@
 /** @jsxImportSource react */
 import React, { useState, useEffect } from 'react';
-import type { TankItem, TankParameters, TankDimensions, TankData, PlantItem, Tank } from './types';
+import type { FishData, PlantData, TankParameters, TankDimensions, TankData } from './types';
 import { TankPlannerLayout } from './TankPlannerLayout';
-import { convertTankData } from '@/lib/tanks';
+import { getDefaultTankParameters } from '@/services/collections';
 
 interface TankPlannerPageProps {
-  allFish: TankItem[];
-  allPlants: PlantItem[];
-  allTanks: Array<{
-    name: string;
-    profile: string;
-    lengthInches: number;
-    widthInches: number;
-    heightInches: number;
-    glassThicknessMM: number;
-    volumeGallons: number;
-  }>;
+  fish: FishData[];
+  plants: PlantData[];
+  tanks: TankData[];
 }
 
 // Main entry point for the Tank Planner application
-export const TankPlannerPage: React.FC<TankPlannerPageProps> = ({ allFish, allPlants, allTanks }) => {
+export const TankPlannerPage: React.FC<TankPlannerPageProps> = ({ fish, plants, tanks }) => {
   // Default tank parameters
-  const [parameters, setParameters] = useState<TankParameters>({
-    temperature: 25, // Celsius
-    ph: 7.0,
-    size: 60, // Default size in liters
-  });
+  const [parameters, setParameters] = useState<TankParameters>(getDefaultTankParameters(60));
 
   // Selected fish and plants
-  const [selectedItems, setSelectedItems] = useState<TankItem[]>([]);
-  const [selectedPlants, setSelectedPlants] = useState<PlantItem[]>([]);
+  const [selectedFish, setSelectedFish] = useState<FishData[]>([]);
+  const [selectedPlants, setSelectedPlants] = useState<PlantData[]>([]);
 
-  // Convert tank data to our internal format
-  const tanks: Tank[] = allTanks.map(convertTankData);
-
-  const handleParameterChange = (key: keyof TankParameters, value: number) => {
+  const handleParameterChange = (key: keyof TankParameters, value: any) => {
     setParameters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleAddItem = (item: TankItem) => {
-    // Check if the item is already in the list
-    const isExisting = selectedItems.some(existingItem => existingItem.slug === item.slug);
+  const handleAddFish = (item: FishData) => {
+    // Check if the fish is already in the list
+    const isExisting = selectedFish.some(existingFish => existingFish.slug === item.slug);
     
     if (!isExisting) {
-      setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+      setSelectedFish(prev => [...prev, { ...item, quantity: 1 }]);
     } else {
-      // If the item is already in the list, increase its quantity
-      setSelectedItems(prev => 
-        prev.map(existingItem => 
-          existingItem.slug === item.slug
-            ? { ...existingItem, quantity: (existingItem.quantity || 1) + 1 }
-            : existingItem
+      // If the fish is already in the list, increase its quantity
+      setSelectedFish(prev => 
+        prev.map(existingFish => 
+          existingFish.slug === item.slug
+            ? { ...existingFish, quantity: (existingFish.quantity || 1) + 1 }
+            : existingFish
         )
       );
     }
   };
 
-  const handleRemoveItem = (slug: string) => {
-    setSelectedItems(prev => prev.filter(item => item.slug !== slug));
+  const handleRemoveFish = (slug: string) => {
+    setSelectedFish(prev => prev.filter(fish => fish.slug !== slug));
   };
 
-  const handleUpdateQuantity = (slug: string, quantity: number) => {
+  const handleUpdateFishQuantity = (slug: string, quantity: number) => {
     if (quantity <= 0) {
-      handleRemoveItem(slug);
+      handleRemoveFish(slug);
       return;
     }
     
-    setSelectedItems(prev => 
-      prev.map(item => 
-        item.slug === slug
-          ? { ...item, quantity }
-          : item
+    setSelectedFish(prev => 
+      prev.map(fish => 
+        fish.slug === slug
+          ? { ...fish, quantity }
+          : fish
       )
     );
   };
 
-  const handleAddPlant = (plant: PlantItem) => {
+  const handleAddPlant = (plant: PlantData) => {
     // Check if the plant is already in the list
-    const isExisting = selectedPlants.some(existingPlant => existingPlant.scientificName === plant.scientificName);
+    const isExisting = selectedPlants.some(existingPlant => existingPlant.slug === plant.slug);
     
     if (!isExisting) {
       setSelectedPlants(prev => [...prev, { ...plant, quantity: 1 }]);
@@ -85,7 +70,7 @@ export const TankPlannerPage: React.FC<TankPlannerPageProps> = ({ allFish, allPl
       // If the plant is already in the list, increase its quantity
       setSelectedPlants(prev => 
         prev.map(existingPlant => 
-          existingPlant.scientificName === plant.scientificName
+          existingPlant.slug === plant.slug
             ? { ...existingPlant, quantity: (existingPlant.quantity || 1) + 1 }
             : existingPlant
         )
@@ -93,19 +78,19 @@ export const TankPlannerPage: React.FC<TankPlannerPageProps> = ({ allFish, allPl
     }
   };
 
-  const handleRemovePlant = (scientificName: string) => {
-    setSelectedPlants(prev => prev.filter(plant => plant.scientificName !== scientificName));
+  const handleRemovePlant = (slug: string) => {
+    setSelectedPlants(prev => prev.filter(plant => plant.slug !== slug));
   };
 
-  const handleUpdatePlantQuantity = (scientificName: string, quantity: number) => {
+  const handleUpdatePlantQuantity = (slug: string, quantity: number) => {
     if (quantity <= 0) {
-      handleRemovePlant(scientificName);
+      handleRemovePlant(slug);
       return;
     }
     
     setSelectedPlants(prev => 
       prev.map(plant => 
-        plant.scientificName === scientificName
+        plant.slug === slug
           ? { ...plant, quantity }
           : plant
       )
@@ -116,16 +101,16 @@ export const TankPlannerPage: React.FC<TankPlannerPageProps> = ({ allFish, allPl
     <div className="min-h-screen bg-blue-50 dark:bg-gray-900 text-gray-800 dark:text-white">
       <div className="container mx-auto py-8">
         <TankPlannerLayout
-          allFish={allFish}
-          allPlants={allPlants}
+          allFish={fish}
+          allPlants={plants}
           tanks={tanks}
-          selectedItems={selectedItems}
+          selectedFish={selectedFish}
           selectedPlants={selectedPlants}
           parameters={parameters}
           onParameterChange={handleParameterChange}
-          onAddItem={handleAddItem}
-          onRemoveItem={handleRemoveItem}
-          onUpdateQuantity={handleUpdateQuantity}
+          onAddFish={handleAddFish}
+          onRemoveFish={handleRemoveFish}
+          onUpdateFishQuantity={handleUpdateFishQuantity}
           onAddPlant={handleAddPlant}
           onRemovePlant={handleRemovePlant}
           onUpdatePlantQuantity={handleUpdatePlantQuantity}

@@ -3,10 +3,10 @@ import { Button } from '@/components/ui/button';
 import { X, Fish, Leaf } from 'lucide-react';
 import { getConsistentColor } from '@/utils/color-utils';
 import { cn } from '@/lib/utils';
-import type { BaseTankItemData } from './types';
+import type { BaseTankItem } from './types';
 
 interface SelectedFishListProps {
-  selectedFish: (BaseTankItemData & { quantity: number })[];
+  selectedFish: (BaseTankItem & { quantity: number })[];
   onRemoveFish: (name: string) => void;
 }
 

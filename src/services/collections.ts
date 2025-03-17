@@ -1,210 +1,299 @@
-// Collections service to centralize access to Astro collections
-import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
+// Collections service to centralize access to collections data
 import type { 
-  TankItem, 
   FishData, 
-  TankData, 
-  TankDimensions, 
-  TankParameters,
-  PlantItem,
   PlantData,
+  TankData,
+  TankParameters,
+  TankDimensions,
+  CareLevel,
+  FishSize,
+  FishTemperament,
+  FishLocation,
+  GrowthRate,
   LightingLevel,
-  CompatibilityLevel,
-  WaterParameters,
   SubstrateType,
+  CompatibilityLevel,
   CO2Requirement
 } from '@/components/TankPlanner/types';
-import { getValidImagePath, getEntityImages } from '@/utils/image-utils';
 
 // Conversion helpers
 const inchesToCm = (inches: number): number => inches * 2.54;
 const gallonsToLiters = (gallons: number): number => gallons * 3.78541;
 
+// Helper functions for mapping legacy values
+const mapCareLevel = (level: string): CareLevel => {
+  switch (level.toLowerCase()) {
+    case 'easy':
+      return 'easy';
+    case 'moderate':
+    case 'intermediate':
+      return 'medium';
+    case 'difficult':
+    case 'advanced':
+      return 'hard';
+    default:
+      return 'medium';
+  }
+};
+
+const mapFishSize = (size: number): FishSize => {
+  if (size <= 5) return 'small';
+  if (size <= 15) return 'medium';
+  return 'large';
+};
+
+const mapTemperament = (temp: string): FishTemperament => {
+  switch (temp.toLowerCase()) {
+    case 'peaceful':
+      return 'peaceful';
+    case 'aggressive':
+      return 'aggressive';
+    default:
+      return 'semi-aggressive';
+  }
+};
+
+const mapLocation = (level: string | undefined): FishLocation => {
+  if (!level) return 'middle';
+  
+  switch (level.toLowerCase()) {
+    case 'top':
+      return 'top';
+    case 'bottom':
+      return 'bottom';
+    default:
+      return 'middle';
+  }
+};
+
+const mapGrowthRate = (rate: string): GrowthRate => {
+  switch (rate.toLowerCase()) {
+    case 'fast':
+      return 'fast';
+    case 'slow':
+      return 'slow';
+    default:
+      return 'medium';
+  }
+};
+
+const mapLightingLevel = (level: string): LightingLevel => {
+  switch (level.toLowerCase()) {
+    case 'high':
+      return 'high';
+    case 'low':
+      return 'low';
+    default:
+      return 'medium';
+  }
+};
+
+const mapSubstrateType = (type: string): SubstrateType => {
+  switch (type.toLowerCase()) {
+    case 'sand':
+      return 'sand';
+    case 'gravel':
+      return 'gravel';
+    case 'soil':
+      return 'soil';
+    case 'aqua soil':
+      return 'aqua soil';
+    default:
+      return 'none';
+  }
+};
+
+const mapCO2Requirement = (required: boolean | string): CO2Requirement => {
+  if (required === true || required === 'required') return 'required';
+  if (required === 'recommended') return 'recommended';
+  return 'none';
+};
+
+export function getCareLevel(level: string): CareLevel {
+  switch (level.toLowerCase()) {
+    case 'easy':
+    case 'beginner':
+      return 'easy';
+    case 'medium':
+    case 'intermediate':
+      return 'medium';
+    case 'hard':
+    case 'advanced':
+      return 'hard';
+    default:
+      return 'medium';
+  }
+}
+
+export function convertCO2Requirement(co2: any): CO2Requirement {
+  if (co2 === 'required') return 'required';
+  if (co2 === 'recommended') return 'recommended';
+  return 'none';
+}
+
 /**
- * Retrieves all fish from the collection and transforms them into the format expected by components
+ * Retrieves all fish from the API and transforms them into the format expected by components
  */
-export async function getAllFish(): Promise<TankItem[]> {
+export async function getAllFish(): Promise<FishData[]> {
   try {
-    const fishEntries = await getCollection('fish');
-    console.log('Fish entries:', fishEntries);
-    return Promise.all(fishEntries.map(async (entry) => transformFishEntry(entry)));
+    const response = await fetch('/api/collections');
+    const data = await response.json();
+    return data.fish.map((fish: any) => convertFishForPlannerPage(fish));
   } catch (error) {
-    console.error('Error fetching fish collection:', error);
-    return []; // Return empty array on error
+    console.error('Error fetching fish:', error);
+    return [];
   }
 }
 
 /**
- * Transforms a fish collection entry into the format expected by components
+ * Transforms a fish entry into the format expected by components
  */
-export function transformFishEntry(entry: CollectionEntry<'fish'>): TankItem {
-  // Get validated image paths
-  const image = getValidImagePath(entry.data.image, 'fish');
-  const thumbnail = getValidImagePath(entry.data.thumbnail, 'fish');
-
-  const fishData: FishData = {
-    name: entry.data.commonName,
-    description: entry.data.description,
-    waterParameters: {
-      temperature: entry.data.waterParameters.temperature,
-      pH: entry.data.waterParameters.pH,
-      hardness: entry.data.waterParameters.hardness
-    },
-    tankSize: {
-      minimum: entry.data.tankSize.minimum,
-      recommended: entry.data.tankSize.recommended
-    },
-    compatibility: {
-      plants: entry.data.compatibility.plants,
-      otherFish: entry.data.compatibility.otherFish
-    },
-    behavior: entry.data.behavior,
-    categories: entry.data.categories || [],
-    bioload: entry.data.bioload || 1, // Default bioload of 1 if not specified
-    size: entry.data.size || 0,
-    temperament: entry.data.temperament,
-    swimLevel: entry.data.swimLevel,
-    maxSize: entry.data.maxSize,
-    image,
-    thumbnail,
-    slug: entry.slug,
-    quantity: 0
-  };
+export const transformFishEntry = (entry: any): any => {
+  if (!entry?.data) {
+    console.error('Invalid fish entry:', entry);
+    throw new Error('Invalid fish entry data');
+  }
 
   return {
-    ...fishData,
-    size: entry.data.tankSize.minimum / 10 // Convert tank size to approximate fish size
+    slug: entry.slug,
+    name: entry.data.commonName,
+    scientificName: entry.data.scientificName,
+    description: entry.data.description,
+    image: entry.data.image,
+    thumbnail: entry.data.thumbnail,
+    waterParameters: {
+      temperature: {
+        min: entry.data.waterParameters?.temperature?.min ?? 20,
+        max: entry.data.waterParameters?.temperature?.max ?? 30
+      },
+      pH: {
+        min: entry.data.waterParameters?.pH?.min ?? 6.5,
+        max: entry.data.waterParameters?.pH?.max ?? 8.5
+      }
+    },
+    tankSize: {
+      minimum: entry.data.tankSize?.minimum ?? 10,
+      recommended: entry.data.tankSize?.recommended ?? 20
+    },
+    careLevel: mapCareLevel(entry.data.careLevel ?? 'intermediate'),
+    size: mapFishSize(entry.data.size ?? 5),
+    temperament: mapTemperament(entry.data.temperament ?? 'peaceful'),
+    location: mapLocation(entry.data.swimLevel),
+    isPlantSafe: entry.data.isPlantSafe ?? true,
+    categories: entry.data.categories || [],
+    quantity: 0,
+    compatibility: {
+      otherFish: entry.data.compatibility?.otherFish || {},
+      plants: entry.data.compatibility?.plants
+    }
+  };
+};
+
+export function convertFishForPlannerPage(fish: any): FishData {
+  return {
+    ...fish,
+    careLevel: getCareLevel(fish.careLevel),
+    waterParameters: {
+      temperature: {
+        min: fish.waterParameters?.temperature?.min ?? 22,
+        max: fish.waterParameters?.temperature?.max ?? 28
+      },
+      pH: {
+        min: fish.waterParameters?.pH?.min ?? 6.5,
+        max: fish.waterParameters?.pH?.max ?? 7.5
+      }
+    }
   };
 }
 
 /**
- * Retrieves all plants from the collection and transforms them into the format expected by components
+ * Retrieves all plants from the API and transforms them into the format expected by components
  */
-export async function getAllPlants(): Promise<PlantItem[]> {
+export async function getAllPlants(): Promise<PlantData[]> {
   try {
-    console.log('Fetching plants collection...');
-    const plantEntries = await getCollection('plants');
-    console.log('Plant entries:', plantEntries);
-    
-    // Check if we have any entries
-    if (!plantEntries || plantEntries.length === 0) {
-      console.warn('No plant entries found in collection');
-      return [];
-    }
-
-    // Log the first entry to see its structure
-    if (plantEntries[0]) {
-      console.log('Sample plant entry structure:', {
-        id: plantEntries[0].id,
-        slug: plantEntries[0].slug,
-        data: plantEntries[0].data
-      });
-    }
-
-    const transformedPlants = await Promise.all(
-      plantEntries.map(async (entry) => {
-        try {
-          return transformPlantEntry(entry);
-        } catch (error) {
-          console.error(`Error transforming plant entry ${entry.id}:`, error);
-          return null;
-        }
-      })
-    );
-
-    // Filter out any null entries from failed transformations
-    const validPlants = transformedPlants.filter((plant): plant is PlantItem => plant !== null);
-    console.log('Valid transformed plants:', validPlants);
-
-    return validPlants;
+    const response = await fetch('/api/collections');
+    const data = await response.json();
+    return data.plants.map((plant: any) => convertPlantsForPlannerPage(plant));
   } catch (error) {
-    console.error('Error fetching plant collection:', error);
-    console.error('Error details:', error instanceof Error ? error.message : error);
-    return []; // Return empty array on error
+    console.error('Error fetching plants:', error);
+    return [];
   }
 }
 
 /**
- * Transforms a plant collection entry into the format expected by components
+ * Transforms a plant entry into the format expected by components
  */
-export function transformPlantEntry(entry: CollectionEntry<'plants'>): PlantItem {
-  try {
-    console.log('Transforming plant entry:', entry.id);
-    // Get validated image paths
-    const image = getValidImagePath(entry.data.image, 'plant');
-    const thumbnail = getValidImagePath(entry.data.thumbnail, 'plant');
-    
-    const plantData: PlantData = {
-      name: entry.data.commonName,
-      description: entry.data.description,
-      scientificName: entry.data.scientificName,
-      commonName: entry.data.commonName,
-      careLevel: entry.data.careLevel,
-      tankSize: {
-        minimum: entry.data.tankSize.minimum,
-        recommended: entry.data.tankSize.recommended
-      },
-      waterParameters: {
-        temperature: entry.data.waterParameters.temperature,
-        pH: entry.data.waterParameters.pH,
-        hardness: entry.data.waterParameters.hardness
-      },
-      lighting: entry.data.lighting,
-      substrate: entry.data.substrate,
-      co2: entry.data.co2,
-      growth: entry.data.growth,
-      image,
-      thumbnail,
-      slug: entry.slug,
-      quantity: 0
-    };
-
-    console.log('Transformed plant data:', plantData);
-
-    return {
-      ...plantData,
-    };
-  } catch (error) {
-    console.error('Error transforming plant entry:', entry.id);
-    console.error('Error details:', error instanceof Error ? error.message : error);
-    throw error;
+export const transformPlantEntry = (entry: any): any => {
+  if (!entry?.data) {
+    console.error('Invalid plant entry:', entry);
+    throw new Error('Invalid plant entry data');
   }
+
+  return {
+    slug: entry.slug,
+    name: entry.data.commonName,
+    scientificName: entry.data.scientificName,
+    description: entry.data.description,
+    image: entry.data.image,
+    thumbnail: entry.data.thumbnail,
+    waterParameters: {
+      temperature: {
+        min: entry.data.waterParameters?.temperature?.min ?? 20,
+        max: entry.data.waterParameters?.temperature?.max ?? 30
+      },
+      pH: {
+        min: entry.data.waterParameters?.pH?.min ?? 6.5,
+        max: entry.data.waterParameters?.pH?.max ?? 8.5
+      }
+    },
+    tankSize: {
+      minimum: entry.data.tankSize?.minimum ?? 10,
+      recommended: entry.data.tankSize?.recommended ?? 20
+    },
+    careLevel: mapCareLevel(entry.data.careLevel ?? 'intermediate'),
+    height: entry.data.height ?? 10,
+    width: entry.data.width ?? 10,
+    growthRate: mapGrowthRate(entry.data.growthRate ?? 'medium'),
+    lighting: mapLightingLevel(entry.data.lighting ?? 'medium'),
+    co2: convertCO2Requirement(entry.data.co2),
+    substrate: (entry.data.substrate || ['none']).map(mapSubstrateType),
+    categories: entry.data.categories || [],
+    quantity: 0,
+    compatibility: {
+      otherPlants: entry.data.compatibility?.otherPlants || {},
+      fish: entry.data.compatibility?.fish
+    }
+  };
+};
+
+export function convertPlantsForPlannerPage(plant: any): PlantData {
+  return {
+    ...plant,
+    careLevel: getCareLevel(plant.careLevel),
+    waterParameters: {
+      temperature: {
+        min: plant.waterParameters?.temperature?.min ?? 22,
+        max: plant.waterParameters?.temperature?.max ?? 28
+      },
+      pH: {
+        min: plant.waterParameters?.pH?.min ?? 6.5,
+        max: plant.waterParameters?.pH?.max ?? 7.5
+      }
+    }
+  };
 }
 
 /**
- * Retrieves all tanks from the collection and transforms them into standard tank format
- * for use in the TankPlannerPage component
+ * Retrieves all tanks from the API and transforms them into the format expected by components
  */
-export async function getAllTanks(): Promise<Array<{
-  name: string;
-  profile: string;
-  lengthInches: number;
-  widthInches: number;
-  heightInches: number;
-  glassThicknessMM: number;
-  volumeGallons: number;
-}>> {
+export async function getAllTanks(): Promise<TankData[]> {
   try {
-    const tankEntries = await getCollection('tanks');
-    console.log('Tank entries:', tankEntries);
-    
-    if (!tankEntries || tankEntries.length === 0) {
-      console.warn('No tank entries found, using standard tanks');
-      return getStandardTanks();
-    }
-    
-    return tankEntries.map(entry => ({
-      name: entry.data.name,
-      profile: entry.data.profile,
-      lengthInches: entry.data.lengthInches,
-      widthInches: entry.data.widthInches,
-      heightInches: entry.data.heightInches,
-      glassThicknessMM: entry.data.glassThicknessMM,
-      volumeGallons: entry.data.volumeGallons
-    }));
+    const response = await fetch('/api/collections');
+    const data = await response.json();
+    const tanks = data.tanks.map((tank: any) => convertTanksForPlannerPage(tank));
+    return tanks.length > 0 ? tanks : getStandardTanks();
   } catch (error) {
-    console.error('Error fetching tank collection:', error);
+    console.error('Error fetching tanks:', error);
     return getStandardTanks();
   }
 }
@@ -212,81 +301,114 @@ export async function getAllTanks(): Promise<Array<{
 /**
  * Provides a list of standard tanks as a fallback
  */
-function getStandardTanks(): Array<{
-  name: string;
-  profile: string;
-  lengthInches: number;
-  widthInches: number;
-  heightInches: number;
-  glassThicknessMM: number;
-  volumeGallons: number;
-}> {
+export function getStandardTanks(): TankData[] {
   return [
     {
-      name: "30C",
-      profile: "Cube",
-      lengthInches: 12,
-      widthInches: 12,
-      heightInches: 12,
-      glassThicknessMM: 5,
-      volumeGallons: 7.5
+      name: 'Nano Tank',
+      size: 20,
+      dimensions: {
+        lengthCm: 30,
+        widthCm: 30,
+        heightCm: 30
+      },
+      defaultParameters: getDefaultTankParameters(20),
+      profile: 'Nano',
+      description: 'Perfect for small spaces and desktop aquariums',
+      volumeGallons: 5,
+      volumeLiters: 20
     },
     {
-      name: "60U",
-      profile: "Standard",
-      lengthInches: 23.62,
-      widthInches: 14.17,
-      heightInches: 14.17,
-      glassThicknessMM: 6,
-      volumeGallons: 20
+      name: 'Standard 10 Gallon',
+      size: 40,
+      dimensions: {
+        lengthCm: 50,
+        widthCm: 25,
+        heightCm: 30
+      },
+      defaultParameters: getDefaultTankParameters(40),
+      profile: 'Standard',
+      description: 'Classic beginner tank size',
+      volumeGallons: 10,
+      volumeLiters: 40
     },
     {
-      name: "90U",
-      profile: "Standard",
-      lengthInches: 35.43,
-      widthInches: 17.72,
-      heightInches: 17.72,
-      glassThicknessMM: 8,
-      volumeGallons: 48
+      name: 'Medium 20 Gallon',
+      size: 75,
+      dimensions: {
+        lengthCm: 60,
+        widthCm: 30,
+        heightCm: 40
+      },
+      defaultParameters: getDefaultTankParameters(75),
+      profile: 'Standard',
+      description: 'Great size for community tanks',
+      volumeGallons: 20,
+      volumeLiters: 75
     },
     {
-      name: "180U",
-      profile: "Long",
-      lengthInches: 70.87,
-      widthInches: 23.62,
-      heightInches: 23.62,
-      glassThicknessMM: 12,
-      volumeGallons: 180
+      name: 'Large 40 Gallon',
+      size: 150,
+      dimensions: {
+        lengthCm: 90,
+        widthCm: 45,
+        heightCm: 45
+      },
+      defaultParameters: getDefaultTankParameters(150),
+      profile: 'Standard',
+      description: 'Excellent for larger community tanks',
+      volumeGallons: 40,
+      volumeLiters: 150
     }
   ];
 }
 
 /**
- * Converts tank data into the format expected by the TankPlannerPage component
+ * Transforms a tank entry into the format expected by components
  */
-export function convertTanksForPlannerPage(tanks: Array<{
-  name: string;
-  profile: string;
-  lengthInches: number;
-  widthInches: number;
-  heightInches: number;
-  glassThicknessMM: number;
-  volumeGallons: number;
-}>): TankData[] {
-  return tanks.map(tank => ({
-    name: tank.name,
+export const transformTankEntry = (entry: any): any => {
+  if (!entry?.data) {
+    console.error('Invalid tank entry:', entry);
+    throw new Error('Invalid tank entry data');
+  }
+
+  const volumeLiters = entry.data.volumeLiters ?? entry.data.volumeGallons * 3.78541;
+  
+  return {
+    name: entry.data.name,
+    size: volumeLiters,
     dimensions: {
-      lengthCm: inchesToCm(tank.lengthInches),
-      widthCm: inchesToCm(tank.widthInches),
-      heightCm: inchesToCm(tank.heightInches)
+      lengthCm: entry.data.dimensions?.lengthCm ?? 0,
+      widthCm: entry.data.dimensions?.widthCm ?? 0,
+      heightCm: entry.data.dimensions?.heightCm ?? 0
     },
-    parameters: {
-      size: Math.round(gallonsToLiters(tank.volumeGallons)),
-      temperature: 25, // Default temperature
-      ph: 7.0 // Default pH
-    },
-    profile: tank.profile,
-    volumeLiters: Math.round(gallonsToLiters(tank.volumeGallons)),
-    volumeGallons: tank.volumeGallons
-  }));
+    defaultParameters: entry.data.defaultParameters ?? getDefaultTankParameters(volumeLiters),
+    profile: entry.data.profile ?? 'Standard',
+    description: entry.data.description ?? '',
+    volumeGallons: entry.data.volumeGallons ?? volumeLiters / 3.78541,
+    volumeLiters
+  };
+};
+
+export function convertTanksForPlannerPage(tank: any): TankData {
+  return tank;
 }
+
+export function getDefaultTankParameters(size: number): TankParameters {
+  return {
+    temperature: {
+      min: 22,
+      max: 26
+    },
+    pH: {
+      min: 6.5,
+      max: 7.5
+    },
+    size,
+    co2: 'none'
+  };
+}
+
+// Export the collection getter functions with the correct names
+export const getFishCollection = getAllFish;
+export const getPlantCollection = getAllPlants;
+export const getTankCollection = getAllTanks;

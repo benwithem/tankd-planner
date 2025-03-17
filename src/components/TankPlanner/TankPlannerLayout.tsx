@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import React, { useState } from 'react';
 import { TankSetup } from './TankSetup';
 import { WaterParameters } from './WaterParameters';
@@ -9,23 +10,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Fish, Leaf } from "lucide-react";
-import type { TankItem, PlantItem, TankParameters, TankDimensions, Tank } from './types';
+import { Plus, Fish, Leaf } from 'lucide-react';
+import type { FishData, PlantData, TankParameters, TankDimensions, Tank } from './types';
+import { CompatibilityModal } from './CompatibilityModal';
 
 interface TankPlannerLayoutProps {
-  allFish: TankItem[];
-  allPlants: PlantItem[];
+  allFish: FishData[];
+  allPlants: PlantData[];
   tanks: Tank[];
-  selectedItems: TankItem[];
-  selectedPlants: PlantItem[];
+  selectedFish: FishData[];
+  selectedPlants: PlantData[];
   parameters: TankParameters;
-  onParameterChange: (key: keyof TankParameters, value: number) => void;
-  onAddItem: (item: TankItem) => void;
-  onRemoveItem: (slug: string) => void;
-  onUpdateQuantity: (slug: string, quantity: number) => void;
-  onAddPlant: (plant: PlantItem) => void;
-  onRemovePlant: (scientificName: string) => void;
-  onUpdatePlantQuantity: (scientificName: string, quantity: number) => void;
+  onParameterChange: (key: keyof TankParameters, value: any) => void;
+  onAddFish: (fish: FishData) => void;
+  onRemoveFish: (slug: string) => void;
+  onUpdateFishQuantity: (slug: string, quantity: number) => void;
+  onAddPlant: (plant: PlantData) => void;
+  onRemovePlant: (slug: string) => void;
+  onUpdatePlantQuantity: (slug: string, quantity: number) => void;
 }
 
 const initialDimensions: TankDimensions = {
@@ -38,21 +40,28 @@ export function TankPlannerLayout({
   allFish,
   allPlants,
   tanks,
-  selectedItems,
+  selectedFish,
   selectedPlants,
   parameters,
   onParameterChange,
-  onAddItem,
-  onRemoveItem,
-  onUpdateQuantity,
+  onAddFish,
+  onRemoveFish,
+  onUpdateFishQuantity,
   onAddPlant,
   onRemovePlant,
   onUpdatePlantQuantity
 }: TankPlannerLayoutProps) {
   const [dimensions, setDimensions] = useState<TankDimensions>(initialDimensions);
+  const [selectedItem, setSelectedItem] = useState<FishData | PlantData | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleDimensionsChange = (newDimensions: TankDimensions) => {
     setDimensions(newDimensions);
+  };
+
+  const handleViewDetails = (item: FishData | PlantData) => {
+    setSelectedItem(item);
+    setShowDetails(true);
   };
 
   return (
@@ -78,23 +87,23 @@ export function TankPlannerLayout({
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
                     <Fish className="mr-2 h-4 w-4" />
                     Add Fish
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[800px] sm:max-w-[800px] p-0">
-                  <SheetHeader>
+                  <SheetHeader className="p-6">
                     <SheetTitle>Add Fish</SheetTitle>
                     <SheetDescription>
                       Browse and add fish to your aquarium
                     </SheetDescription>
                   </SheetHeader>
-                  <ScrollArea className="h-[calc(100vh-8rem)] p-4">
+                  <ScrollArea className="h-[calc(100vh-8rem)] p-6">
                     <FishSelector
                       allFish={allFish}
-                      selectedFish={selectedItems}
-                      onAddFish={onAddItem}
-                      tankSize={parameters.size}
+                      selectedFish={selectedFish}
+                      onAddFish={onAddFish}
                       currentParameters={parameters}
                     />
                   </ScrollArea>
@@ -103,18 +112,19 @@ export function TankPlannerLayout({
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[300px]">
-                {selectedItems.map((item) => (
+                {selectedFish.map((item) => (
                   <CompatibilityCard
                     key={item.slug}
                     item={item}
                     parameters={parameters}
-                    selectedItems={selectedItems}
+                    selectedFish={selectedFish}
                     selectedPlants={selectedPlants}
-                    onUpdateQuantity={(quantity) => onUpdateQuantity(item.slug, quantity)}
-                    onRemove={() => onRemoveItem(item.slug)}
+                    onUpdateQuantity={(quantity) => onUpdateFishQuantity(item.slug, quantity)}
+                    onRemove={() => onRemoveFish(item.slug)}
+                    onViewDetails={() => handleViewDetails(item)}
                   />
                 ))}
-                {selectedItems.length === 0 && (
+                {selectedFish.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     No fish added yet
                   </div>
@@ -130,23 +140,24 @@ export function TankPlannerLayout({
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
                     <Leaf className="mr-2 h-4 w-4" />
                     Add Plants
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[800px] sm:max-w-[800px] p-0">
-                  <SheetHeader>
+                  <SheetHeader className="p-6">
                     <SheetTitle>Add Plants</SheetTitle>
                     <SheetDescription>
                       Browse and add plants to your aquarium
                     </SheetDescription>
                   </SheetHeader>
-                  <ScrollArea className="h-[calc(100vh-8rem)] p-4">
+                  <ScrollArea className="h-[calc(100vh-8rem)] p-6">
                     <PlantSelector
                       allPlants={allPlants}
                       selectedPlants={selectedPlants}
+                      selectedFish={selectedFish}
                       onAddPlant={onAddPlant}
-                      tankSize={parameters.size}
                       currentParameters={parameters}
                     />
                   </ScrollArea>
@@ -157,13 +168,14 @@ export function TankPlannerLayout({
               <ScrollArea className="h-[300px]">
                 {selectedPlants.map((plant) => (
                   <CompatibilityCard
-                    key={plant.scientificName}
+                    key={plant.slug}
                     item={plant}
                     parameters={parameters}
-                    selectedItems={selectedItems}
+                    selectedFish={selectedFish}
                     selectedPlants={selectedPlants}
-                    onUpdateQuantity={(quantity) => onUpdatePlantQuantity(plant.scientificName, quantity)}
-                    onRemove={() => onRemovePlant(plant.scientificName)}
+                    onUpdateQuantity={(quantity) => onUpdatePlantQuantity(plant.slug, quantity)}
+                    onRemove={() => onRemovePlant(plant.slug)}
+                    onViewDetails={() => handleViewDetails(plant)}
                   />
                 ))}
                 {selectedPlants.length === 0 && (
@@ -183,13 +195,26 @@ export function TankPlannerLayout({
           </CardHeader>
           <CardContent>
             <CompatibilityAnalysis
-              selectedItems={selectedItems}
+              selectedFish={selectedFish}
               selectedPlants={selectedPlants}
               parameters={parameters}
+              onViewDetails={handleViewDetails}
             />
           </CardContent>
         </Card>
       </div>
+
+      {/* Details Modal */}
+      {selectedItem && (
+        <CompatibilityModal
+          open={showDetails}
+          onOpenChange={setShowDetails}
+          item={selectedItem}
+          parameters={parameters}
+          selectedFish={selectedFish}
+          selectedPlants={selectedPlants}
+        />
+      )}
     </div>
   );
 }

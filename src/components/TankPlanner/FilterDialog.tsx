@@ -25,7 +25,8 @@ import {
   Droplets,
   X,
   Check,
-  RefreshCw
+  RefreshCw,
+  Leaf
 } from "lucide-react";
 
 interface FilterDialogProps {
@@ -34,6 +35,7 @@ interface FilterDialogProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onReset: () => void;
+  isPlant?: boolean;
 }
 
 interface FilterState {
@@ -58,7 +60,8 @@ export function FilterDialog({
   onOpenChange,
   filters,
   onFiltersChange,
-  onReset
+  onReset,
+  isPlant = false,
 }: FilterDialogProps) {
   const [localFilters, setLocalFilters] = React.useState<FilterState>(filters);
 
@@ -89,7 +92,7 @@ export function FilterDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Filter Fish</DialogTitle>
+          <DialogTitle>{isPlant ? 'Filter Plants' : 'Filter Fish'}</DialogTitle>
           <DialogDescription>
             Customize your view with advanced filtering options
           </DialogDescription>
