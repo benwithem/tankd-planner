@@ -37,6 +37,12 @@ const plantHues = [
   { h: 130, s: 70, l: 45 }, // Aquatic Plant
 ];
 
+/**
+ * Generates a consistent color based on a name string
+ * @param name The string to generate a color from
+ * @param isPlant Whether to use the plant color palette (green hues) instead of fish palette (blue hues)
+ * @returns An HSL color string
+ */
 export function getConsistentColor(name: string, isPlant: boolean = false): string {
   const palette = isPlant ? plantHues : fishHues;
   const index = Math.floor(seededRandom(name, 0, palette.length));
@@ -48,4 +54,35 @@ export function getConsistentColor(name: string, isPlant: boolean = false): stri
   const lightVariation = seededRandom(name + '_light', -5, 5);
   
   return `hsl(${baseColor.h + hueVariation}, ${baseColor.s + satVariation}%, ${baseColor.l + lightVariation}%)`;
+}
+
+/**
+ * Calculates the relative luminance of an HSL color
+ * @param hsl HSL color string in the format "hsl(h, s%, l%)"
+ * @returns The relative luminance value between 0 and 1
+ */
+function getLuminance(hsl: string): number {
+  // Extract the lightness value from the HSL string
+  const match = hsl.match(/hsl\(\s*\d+\s*,\s*\d+%\s*,\s*(\d+)%\s*\)/);
+  if (!match) return 0.5; // Default to middle lightness if parsing fails
+  
+  const lightness = parseInt(match[1], 10);
+  return lightness / 100; // Convert percentage to decimal
+}
+
+/**
+ * Determines a contrasting color (white or a light color) for text/icons to be visible against a background
+ * @param backgroundColor The background color as an HSL string
+ * @returns A contrasting color for text/icons
+ */
+export function getContrastColor(backgroundColor: string): string {
+  const luminance = getLuminance(backgroundColor);
+  
+  // For darker backgrounds, use white or a very light color
+  if (luminance < 0.6) {
+    return 'hsl(0, 0%, 100%)'; // White
+  }
+  
+  // For lighter backgrounds, use a dark blue/teal that's not black
+  return 'hsl(210, 80%, 25%)'; // Dark blue
 }

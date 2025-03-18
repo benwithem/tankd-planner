@@ -22,18 +22,22 @@ const gallonsToLiters = (gallons: number): number => gallons * 3.78541;
 
 // Helper functions for mapping legacy values
 const mapCareLevel = (level: string): CareLevel => {
-  switch (level.toLowerCase()) {
-    case 'easy':
-      return 'easy';
-    case 'moderate':
-    case 'intermediate':
-      return 'medium';
-    case 'difficult':
-    case 'advanced':
-      return 'hard';
-    default:
-      return 'medium';
-  }
+  if (!level) return 'intermediate';
+  
+  const lowercaseLevel = level.toLowerCase();
+  
+  // Direct mappings for our standard values
+  if (lowercaseLevel === 'beginner') return 'beginner';
+  if (lowercaseLevel === 'intermediate') return 'intermediate'; 
+  if (lowercaseLevel === 'advanced') return 'advanced';
+  
+  // Legacy mappings
+  if (lowercaseLevel === 'easy') return 'beginner';
+  if (lowercaseLevel === 'moderate') return 'intermediate';
+  if (lowercaseLevel === 'difficult') return 'advanced';
+  
+  // Default fallback
+  return 'intermediate';
 };
 
 const mapFishSize = (size: number): FishSize => {
@@ -113,15 +117,15 @@ export function getCareLevel(level: string): CareLevel {
   switch (level.toLowerCase()) {
     case 'easy':
     case 'beginner':
-      return 'easy';
+      return 'beginner';
     case 'medium':
     case 'intermediate':
-      return 'medium';
+      return 'intermediate';
     case 'hard':
     case 'advanced':
-      return 'hard';
+      return 'advanced';
     default:
-      return 'medium';
+      return 'intermediate';
   }
 }
 
@@ -148,10 +152,49 @@ export async function getAllFish(): Promise<FishData[]> {
 /**
  * Transforms a fish entry into the format expected by components
  */
-export const transformFishEntry = (entry: any): any => {
+export const transformFishEntry = (entry: any): FishData => {
   if (!entry?.data) {
-    console.error('Invalid fish entry:', entry);
-    throw new Error('Invalid fish entry data');
+    throw new Error(`Invalid fish entry: ${JSON.stringify(entry)}`);
+  }
+
+  // Process temperature array format if needed
+  let tempMin = 20;
+  let tempMax = 30;
+  if (Array.isArray(entry.data.waterParameters?.temperature)) {
+    tempMin = entry.data.waterParameters.temperature[0];
+    tempMax = entry.data.waterParameters.temperature[1];
+  } else {
+    tempMin = entry.data.waterParameters?.temperature?.min ?? 20;
+    tempMax = entry.data.waterParameters?.temperature?.max ?? 30;
+  }
+
+  // Process pH array format if needed
+  let phMin = 6.5;
+  let phMax = 8.5;
+  if (Array.isArray(entry.data.waterParameters?.pH)) {
+    phMin = entry.data.waterParameters.pH[0];
+    phMax = entry.data.waterParameters.pH[1];
+  } else {
+    phMin = entry.data.waterParameters?.pH?.min ?? 6.5;
+    phMax = entry.data.waterParameters?.pH?.max ?? 8.5;
+  }
+
+  // Process hardness array format if needed
+  let hardnessMin = undefined;
+  let hardnessMax = undefined;
+  if (Array.isArray(entry.data.waterParameters?.hardness)) {
+    hardnessMin = entry.data.waterParameters.hardness[0];
+    hardnessMax = entry.data.waterParameters.hardness[1];
+  } else if (entry.data.waterParameters?.hardness) {
+    hardnessMin = entry.data.waterParameters.hardness.min;
+    hardnessMax = entry.data.waterParameters.hardness.max;
+  }
+
+  // Ensure shrimp compatibility is properly extracted
+  let shrimpCompatibility = undefined;
+  if (entry.data.compatibility?.shrimp !== undefined) {
+    // Handle both boolean and 'caution' values
+    shrimpCompatibility = entry.data.compatibility.shrimp;
   }
 
   return {
@@ -163,13 +206,17 @@ export const transformFishEntry = (entry: any): any => {
     thumbnail: entry.data.thumbnail,
     waterParameters: {
       temperature: {
-        min: entry.data.waterParameters?.temperature?.min ?? 20,
-        max: entry.data.waterParameters?.temperature?.max ?? 30
+        min: tempMin,
+        max: tempMax
       },
       pH: {
-        min: entry.data.waterParameters?.pH?.min ?? 6.5,
-        max: entry.data.waterParameters?.pH?.max ?? 8.5
-      }
+        min: phMin,
+        max: phMax
+      },
+      hardness: hardnessMin !== undefined && hardnessMax !== undefined ? {
+        min: hardnessMin,
+        max: hardnessMax
+      } : undefined
     },
     tankSize: {
       minimum: entry.data.tankSize?.minimum ?? 10,
@@ -184,41 +231,11 @@ export const transformFishEntry = (entry: any): any => {
     quantity: 0,
     compatibility: {
       otherFish: entry.data.compatibility?.otherFish || {},
-      plants: entry.data.compatibility?.plants
+      plants: entry.data.compatibility?.plants,
+      shrimp: shrimpCompatibility
     }
   };
 };
-
-export function convertFishForPlannerPage(fish: any): FishData {
-  return {
-    ...fish,
-    careLevel: getCareLevel(fish.careLevel),
-    waterParameters: {
-      temperature: {
-        min: fish.waterParameters?.temperature?.min ?? 22,
-        max: fish.waterParameters?.temperature?.max ?? 28
-      },
-      pH: {
-        min: fish.waterParameters?.pH?.min ?? 6.5,
-        max: fish.waterParameters?.pH?.max ?? 7.5
-      }
-    }
-  };
-}
-
-/**
- * Retrieves all plants from the API and transforms them into the format expected by components
- */
-export async function getAllPlants(): Promise<PlantData[]> {
-  try {
-    const response = await fetch('/api/collections');
-    const data = await response.json();
-    return data.plants.map((plant: any) => convertPlantsForPlannerPage(plant));
-  } catch (error) {
-    console.error('Error fetching plants:', error);
-    return [];
-  }
-}
 
 /**
  * Transforms a plant entry into the format expected by components
@@ -227,6 +244,39 @@ export const transformPlantEntry = (entry: any): any => {
   if (!entry?.data) {
     console.error('Invalid plant entry:', entry);
     throw new Error('Invalid plant entry data');
+  }
+
+  // Process temperature array format if needed
+  let tempMin = 20;
+  let tempMax = 30;
+  if (Array.isArray(entry.data.waterParameters?.temperature)) {
+    tempMin = entry.data.waterParameters.temperature[0];
+    tempMax = entry.data.waterParameters.temperature[1];
+  } else {
+    tempMin = entry.data.waterParameters?.temperature?.min ?? 20;
+    tempMax = entry.data.waterParameters?.temperature?.max ?? 30;
+  }
+
+  // Process pH array format if needed
+  let phMin = 6.5;
+  let phMax = 8.5;
+  if (Array.isArray(entry.data.waterParameters?.pH)) {
+    phMin = entry.data.waterParameters.pH[0];
+    phMax = entry.data.waterParameters.pH[1];
+  } else {
+    phMin = entry.data.waterParameters?.pH?.min ?? 6.5;
+    phMax = entry.data.waterParameters?.pH?.max ?? 8.5;
+  }
+
+  // Process hardness array format if needed
+  let hardnessMin = undefined;
+  let hardnessMax = undefined;
+  if (Array.isArray(entry.data.waterParameters?.hardness)) {
+    hardnessMin = entry.data.waterParameters.hardness[0];
+    hardnessMax = entry.data.waterParameters.hardness[1];
+  } else if (entry.data.waterParameters?.hardness) {
+    hardnessMin = entry.data.waterParameters.hardness.min;
+    hardnessMax = entry.data.waterParameters.hardness.max;
   }
 
   return {
@@ -238,13 +288,17 @@ export const transformPlantEntry = (entry: any): any => {
     thumbnail: entry.data.thumbnail,
     waterParameters: {
       temperature: {
-        min: entry.data.waterParameters?.temperature?.min ?? 20,
-        max: entry.data.waterParameters?.temperature?.max ?? 30
+        min: tempMin,
+        max: tempMax
       },
       pH: {
-        min: entry.data.waterParameters?.pH?.min ?? 6.5,
-        max: entry.data.waterParameters?.pH?.max ?? 8.5
-      }
+        min: phMin,
+        max: phMax
+      },
+      hardness: hardnessMin !== undefined && hardnessMax !== undefined ? {
+        min: hardnessMin,
+        max: hardnessMax
+      } : undefined
     },
     tankSize: {
       minimum: entry.data.tankSize?.minimum ?? 10,
@@ -266,21 +320,18 @@ export const transformPlantEntry = (entry: any): any => {
   };
 };
 
-export function convertPlantsForPlannerPage(plant: any): PlantData {
-  return {
-    ...plant,
-    careLevel: getCareLevel(plant.careLevel),
-    waterParameters: {
-      temperature: {
-        min: plant.waterParameters?.temperature?.min ?? 22,
-        max: plant.waterParameters?.temperature?.max ?? 28
-      },
-      pH: {
-        min: plant.waterParameters?.pH?.min ?? 6.5,
-        max: plant.waterParameters?.pH?.max ?? 7.5
-      }
-    }
-  };
+/**
+ * Retrieves all plants from the API and transforms them into the format expected by components
+ */
+export async function getAllPlants(): Promise<PlantData[]> {
+  try {
+    const response = await fetch('/api/collections');
+    const data = await response.json();
+    return data.plants.map((plant: any) => convertPlantsForPlannerPage(plant));
+  } catch (error) {
+    console.error('Error fetching plants:', error);
+    return [];
+  }
 }
 
 /**
@@ -412,3 +463,43 @@ export function getDefaultTankParameters(size: number): TankParameters {
 export const getFishCollection = getAllFish;
 export const getPlantCollection = getAllPlants;
 export const getTankCollection = getAllTanks;
+
+export function convertFishForPlannerPage(fish: any): FishData {
+  return {
+    ...fish,
+    careLevel: getCareLevel(fish.careLevel),
+    waterParameters: {
+      temperature: {
+        min: fish.waterParameters?.temperature?.min ?? 22,
+        max: fish.waterParameters?.temperature?.max ?? 28
+      },
+      pH: {
+        min: fish.waterParameters?.pH?.min ?? 6.5,
+        max: fish.waterParameters?.pH?.max ?? 7.5
+      },
+      hardness: fish.waterParameters?.hardness
+    },
+    compatibility: {
+      ...fish.compatibility,
+      shrimp: fish.compatibility?.shrimp
+    }
+  };
+}
+
+export function convertPlantsForPlannerPage(plant: any): PlantData {
+  return {
+    ...plant,
+    careLevel: getCareLevel(plant.careLevel),
+    waterParameters: {
+      temperature: {
+        min: plant.waterParameters?.temperature?.min ?? 22,
+        max: plant.waterParameters?.temperature?.max ?? 28
+      },
+      pH: {
+        min: plant.waterParameters?.pH?.min ?? 6.5,
+        max: plant.waterParameters?.pH?.max ?? 7.5
+      },
+      hardness: plant.waterParameters?.hardness
+    }
+  };
+}

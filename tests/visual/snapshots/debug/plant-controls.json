@@ -1,0 +1,58 @@
+[
+  {
+    "text": "Plants",
+    "classes": "text-sm font-medium transition-colors hover:text-primary dark:text-gray-200 dark:hover:text-primary",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "A"
+  },
+  {
+    "text": "",
+    "classes": "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9 dark:border-gray-700",
+    "id": "theme-toggle",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "BUTTON"
+  },
+  {
+    "text": "Menu",
+    "classes": "inline-flex items-center justify-center md:hidden",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "BUTTON"
+  },
+  {
+    "text": "Custom Size",
+    "classes": "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "BUTTON"
+  },
+  {
+    "text": "Add Fish",
+    "classes": "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "BUTTON"
+  },
+  {
+    "text": "Add Plants",
+    "classes": "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "BUTTON"
+  },
+  {
+    "text": "Plant Guide",
+    "classes": "text-muted-foreground hover:text-primary",
+    "id": "",
+    "ariaLabel": null,
+    "title": null,
+    "tagName": "A"
+  }
+]

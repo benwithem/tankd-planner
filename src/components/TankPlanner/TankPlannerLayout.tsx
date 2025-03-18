@@ -4,8 +4,8 @@ import { TankSetup } from './TankSetup';
 import { WaterParameters } from './WaterParameters';
 import { CompatibilityAnalysis } from './CompatibilityAnalysis';
 import { CompatibilityCard } from './CompatibilityCard';
-import { FishSelector } from './FishSelector';
-import { PlantSelector } from './PlantSelector';
+import { FishCollectionSelector } from './FishCollectionSelector';
+import { PlantCollectionSelector } from './PlantCollectionSelector';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -100,11 +100,12 @@ export function TankPlannerLayout({
                     </SheetDescription>
                   </SheetHeader>
                   <ScrollArea className="h-[calc(100vh-8rem)] p-6">
-                    <FishSelector
+                    <FishCollectionSelector
                       allFish={allFish}
                       selectedFish={selectedFish}
                       onAddFish={onAddFish}
                       currentParameters={parameters}
+                      hideTitle={true}
                     />
                   </ScrollArea>
                 </SheetContent>
@@ -153,12 +154,13 @@ export function TankPlannerLayout({
                     </SheetDescription>
                   </SheetHeader>
                   <ScrollArea className="h-[calc(100vh-8rem)] p-6">
-                    <PlantSelector
+                    <PlantCollectionSelector
                       allPlants={allPlants}
                       selectedPlants={selectedPlants}
                       selectedFish={selectedFish}
                       onAddPlant={onAddPlant}
                       currentParameters={parameters}
+                      hideTitle={true}
                     />
                   </ScrollArea>
                 </SheetContent>

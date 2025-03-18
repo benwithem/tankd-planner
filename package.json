@@ -23,6 +23,7 @@
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-hover-card": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-progress": "^1.1.2",
     "@radix-ui/react-scroll-area": "^1.2.3",
     "@radix-ui/react-select": "^2.1.6",
@@ -53,8 +54,13 @@
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.4",
+    "@types/jest": "^29.5.14",
+    "@types/puppeteer": "^5.4.7",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "jest": "^29.7.0",
+    "jest-puppeteer": "^11.0.0",
+    "puppeteer": "^24.4.0",
     "wrangler": "^3.111.0"
   },
   "repository": {

@@ -8,6 +8,10 @@ export interface WaterParameters {
     min: number;
     max: number;
   };
+  hardness?: {
+    min: number;
+    max: number;
+  };
 }
 
 export interface TankDimensions {
@@ -21,7 +25,7 @@ export interface TankSize {
   recommended: number;
 }
 
-export type CareLevel = 'easy' | 'medium' | 'hard';
+export type CareLevel = 'beginner' | 'intermediate' | 'advanced';
 export type FishSize = 'small' | 'medium' | 'large';
 export type FishTemperament = 'peaceful' | 'semi-aggressive' | 'aggressive';
 export type FishLocation = 'top' | 'middle' | 'bottom';
@@ -52,11 +56,12 @@ export interface FishData extends BaseTankItemData {
   location: FishLocation;
   size: FishSize;
   isPlantSafe: boolean;
-  schooling: boolean;
+  schooling?: boolean;
   minSchoolSize?: number;
   compatibility?: {
     otherFish?: Record<string, CompatibilityLevel>;
     plants?: boolean;
+    shrimp?: boolean | 'caution';
   };
   incompatibleWith?: string[];
   diet?: string;
@@ -87,6 +92,10 @@ export interface TankParameters {
     max: number;
   };
   pH: {
+    min: number;
+    max: number;
+  };
+  hardness?: {
     min: number;
     max: number;
   };
